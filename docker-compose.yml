@@ -1,0 +1,45 @@
+version: "2"
+
+services:
+  mongo:
+    image: mongo:3.2
+    volumes:
+      - ./data:/data/db
+    networks:
+      - back-tier
+
+  server:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./.babelrc:/usr/src/app/.babelrc
+      - ./.dockerignore:/usr/src/app/.dockerignore
+      - ./.editorconfig:/usr/src/app/.editorconfig
+      - ./.eslintignore:/usr/src/app/.eslintignore
+      - ./.eslintrc:/usr/src/app/.eslintrc
+      - ./.gitignore:/usr/src/app/.gitignore
+      - ./yarn.lock:/usr/src/app/yarn.lock
+      - ./package.json:/usr/src/app/package.json
+      - ./nodemon.json:/usr/src/app/nodemon.json
+      - ./Dockerfile:/usr/src/app/Dockerfile
+      - ./README.md:/usr/src/app/README.md
+      - ./bin:/usr/src/app/bin
+      - ./logs:/usr/src/app/logs
+      - ./build:/usr/src/app/build
+      - ./config:/usr/src/app/config
+      - ./public:/usr/src/app/public
+      - ./src:/usr/src/app/src
+    command: bash -c "npm run test:watch"
+
+    ports:
+      - 4000:4000
+    networks:
+      - back-tier
+    depends_on:
+      - mongo
+
+networks:
+  back-tier:
