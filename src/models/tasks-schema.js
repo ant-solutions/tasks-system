@@ -4,6 +4,10 @@ import isUndefined from 'lodash/isUndefined';
 import {
   connectPrimaryData,
 } from '../connect/mongo';
+import {
+  toObjectId,
+  isObjectId,
+} from '../utils/to-objectid';
 const { Schema } = mongoose;
 
 const TasksSchema = new Schema({
@@ -41,9 +45,29 @@ TasksSchema.statics.createTask = async function (urgencyArgs) {
 }
 
 TasksSchema.statics.completeTask = async function (taskId) {
+  const _id = isObjectId(taskId) ? taskId : toObjectId(taskId);
+  return this.findOneAndUpdate({
+    _id,
+    status: 'pending',
+  }, {
+    $set: {
+      status: 'completed',
+      completedAt: new Date,
+    }
+  }, {new: true});
 }
 
-TasksSchema.statics.cancelTask = async function () {
+TasksSchema.statics.cancelTask = async function (taskId) {
+  const _id = isObjectId(taskId) ? taskId : toObjectId(taskId);
+  return this.findOneAndUpdate({
+    _id,
+    status: 'pending',
+  }, {
+    $set: {
+      status: 'canceled',
+      completedAt: new Date,
+    }
+  }, {new: true});
 }
 
 TasksSchema.statics.receiveTasks = async function () {
