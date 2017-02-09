@@ -1,19 +1,12 @@
 import mongoose from 'mongoose';
 import timestamps from 'mongoose-timestamp';
+import isUndefined from 'lodash/isUndefined';
 import {
   connectPrimaryData,
 } from '../connect/mongo';
 const { Schema } = mongoose;
 
 const TasksSchema = new Schema({
-  // title: {
-  //   type: String,
-  //   required: true,
-  // },
-  // done: {
-  //   type: Boolean,
-  //   required: true,
-  // },
   completedAt: {
     type: Date,
   },
@@ -40,8 +33,23 @@ TasksSchema.plugin(timestamps);
 // methods
 
 // statics methods
-TasksSchema.statics.hello = function () {
-  console.log('1234');
+TasksSchema.statics.createTask = async function (urgencyArgs) {
+  const urgency = isUndefined(urgencyArgs) ? 'immediate' : urgencyArgs;
+  return this.create({
+    urgency,
+  });
+}
+
+TasksSchema.statics.completeTask = async function (taskId) {
+}
+
+TasksSchema.statics.cancelTask = async function () {
+}
+
+TasksSchema.statics.receiveTasks = async function () {
+}
+
+TasksSchema.statics.unassignTasks = async function () {
 }
 
 let model = null;

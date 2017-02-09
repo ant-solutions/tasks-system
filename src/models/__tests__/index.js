@@ -1,15 +1,24 @@
-import TasksModel from '../tasks-schema'
+import TasksModel from '../tasks-schema';
+import isDate from 'lodash/isDate';
 import test from 'tape';
 
 test('TasksModel test', async function (t) {
-  t.plan(2);
+  t.plan(3);
 
-  t.equal(typeof Date.now, 'function');
-  var start = Date.now();
+  // remove all
+  await TasksModel().remove({});
 
-  setTimeout(function () {
-    t.equal(Date.now() - start, 100);
-  }, 100);
-  TasksModel().hello();
-  console.log(await TasksModel().find({}));
+  const task = await TasksModel().createTask();
+  t.equal(isDate(task.createdAt), true, 'createdAt should be Date type');
+  t.equal(isDate(task.updatedAt), true, 'createdAt should be Date type');
+  t.equal(task.__v, 0, 'should equal 0');
+
+  // const task = await TasksModel().completeTask(task._id);
+  // const task = await TasksModel().cancelTask(task._id);
+  // const task = await TasksModel().receiveTasks(node_id, batch_size);
+  // const task = await TasksModel().unassignTasks(node_id);
+
+  console.log(task);
+
+  // t.equal(1, 2);
 });
