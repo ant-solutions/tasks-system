@@ -44,7 +44,7 @@ TasksSchedulerSchema.statics.receiveTasks = async function (nodeId, batchSize) {
     throw new Error('not found Node Resource');
   }
   const tasks = await TasksModel().find({
-    status: 'pending'
+    status: 'none'
   }).sort({
     urgency: 1
   }).limit(batchSize);
@@ -53,7 +53,16 @@ TasksSchedulerSchema.statics.receiveTasks = async function (nodeId, batchSize) {
     node: _nodeId,
     task: v._id
   }));
-  return await this.create(newTasksScheduler);
+  const tasksId = tasks.map((v) => (v._id));
+  const result = await this.create(newTasksScheduler);
+  await TasksModel().update({
+    _id: {$in: tasksId},
+    status: 'none'
+  }, {
+    $set: {
+      status: 'pending'
+    }
+  });
 }
 TasksSchedulerSchema.statics.unassignTasks = async function (nodeId) {
   const _nodeId = isObjectId(nodeId) ? nodeId : toObjectId(nodeId);
@@ -68,9 +77,14 @@ TasksSchedulerSchema.statics.unassignTasks = async function (nodeId) {
   await this.remove({
     node: _nodeId
   });
-  return TasksModel().find({
-    _id: {$in: unassignTasks}
-  });
+  return TasksModel().update({
+    _id: {$in: unassignTasks},
+    status: 'pending',
+  }, {
+    $set: {
+      status: 'none',
+    }
+  }, {new: true});
 }
 
 let model = null;

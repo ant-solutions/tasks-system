@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import timestamps from 'mongoose-timestamp';
 import moment from 'moment';
 import isUndefined from 'lodash/isUndefined';
+import NodesModel from './nodes-schema';
 import {
   connectPrimaryData,
 } from '../connect/mongo';
@@ -23,7 +24,11 @@ const TasksSchema = new Schema({
   },
   urgency: {
     type: Date,
-  }
+  },
+  node: {
+    type: ObjectId,
+    ref: 'Nodes',
+  },
 });
 
 // indexes
@@ -82,6 +87,52 @@ TasksSchema.statics.cancelTask = async function (taskId) {
     $set: {
       status: 'canceled',
       completedAt: new Date,
+    }
+  }, {new: true});
+}
+
+TasksSchema.statics.receiveTasks = async function (nodeId, batchSize) {
+  const _nodeId = isObjectId(nodeId) ? nodeId : toObjectId(nodeId);
+  const node = await NodesModel().findOne({_id: _nodeId});
+  if(!node) {
+    throw new Error('not found Node Resource');
+  }
+  const tasks = await this.find({
+    status: 'pending',
+    node: { $exists: false }
+  }).sort({
+    urgency: 1
+  }).limit(batchSize);
+  const tasksId = tasks.map((v) => (v._id));
+  const result = await this.update({
+    _id: {$in: tasksId},
+    node: { $exists: false }
+  }, {
+    $set: {
+      node: nodeId
+    }
+  }, {multi: true});
+  if(result.ok === 1) {
+    return this.find({
+      _id: {$in: tasksId},
+      node: { $exists: true }
+    });
+  }
+  return Promise.resolve([]);
+}
+
+TasksSchema.statics.unassignTasks = async function (nodeId) {
+  const _nodeId = isObjectId(nodeId) ? nodeId : toObjectId(nodeId);
+  const node = await NodesModel().findOne({_id: _nodeId});
+  if(!node) {
+    throw new Error('not found Node Resource');
+  }
+  return TasksModel().update({
+    node: nodeId,
+    status: 'pending',
+  }, {
+    $set: {
+      node: undefined
     }
   }, {new: true});
 }
