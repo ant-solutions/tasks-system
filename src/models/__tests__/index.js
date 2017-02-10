@@ -1,12 +1,32 @@
 import TasksModel from '../tasks-schema';
+import NodesModel from '../nodes-schema';
 import isDate from 'lodash/isDate';
 import test from 'tape';
+import {
+  toObjectId,
+  isObjectId,
+} from '../../utils/to-objectid';
 
 test('TasksModel test', async function (t) {
-  t.plan(16);
+  t.plan(23);
 
   // remove all
   await TasksModel().remove({});
+  await NodesModel().remove({});
+
+  // Insert dummy data
+  const nodesDummyData = [{
+    _id: toObjectId('589db5443d5dae015dc3fd7d'),
+    title: 'node resources A'
+  }, {
+    _id: toObjectId('589db5443d5dae015dc3fd7e'),
+    title: 'node resources B'
+  }];
+
+  const nodesResources = [];
+  for (let i = nodesDummyData.length - 1; i >= 0; i--) {
+    nodesResources.push(await NodesModel().create(nodesDummyData[i]));
+  }
 
   const task = await TasksModel().createTask();
   t.equal(isDate(task.createdAt), true, 'createdAt should be Date type');
@@ -31,9 +51,17 @@ test('TasksModel test', async function (t) {
   t.equal(taskcanceled.urgency, 'immediate', 'urgency should equal immediate');
   t.equal(taskcanceled.status, 'canceled', 'status should equal canceled');
 
-  // const task = await TasksModel().cancelTask(task._id);
-  // const task = await TasksModel().receiveTasks(node_id, batch_size);
   // const task = await TasksModel().unassignTasks(node_id);
+  const task3 = await TasksModel().createTask();
+  const bash = await task3.receiveTasks(toObjectId('589db5443d5dae015dc3fd7d'), 5);
+  t.equal(bash.priority, 5, 'priority should equal 5');
+  t.equal(bash.node.toString(), '589db5443d5dae015dc3fd7d', 'node should equal 589db5443d5dae015dc3fd7d');
+  t.equal(bash.status, 'pending', 'status should equal pending');
 
-  // t.equal(1, 2);
+  const unassignedTask = await bash.unassignTasks(toObjectId('589db5443d5dae015dc3fd7d'));
+  t.equal(unassignedTask.priority, 0, 'priority should equal 5');
+  t.equal(unassignedTask.node, undefined, 'node should equal undefined');
+  t.equal(unassignedTask.status, 'pending', 'status should equal pending');
+
+  t.equal(1, 2);
 });
