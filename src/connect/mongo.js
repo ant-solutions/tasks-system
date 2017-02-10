@@ -47,7 +47,8 @@ export function connect(uri, options, cb) {
 let primaryData = null;
 const {
   TasksModel,
-  NodesModel
+  NodesModel,
+  TasksSchedulerModel,
 } = require('../models');
 
 export function connectPrimaryData(uri, options) {
@@ -59,6 +60,7 @@ export function connectPrimaryData(uri, options) {
 
     TasksModel(primaryData);
     NodesModel(primaryData);
+    TasksSchedulerModel(primaryData);
   }
   return primaryData;
 }
