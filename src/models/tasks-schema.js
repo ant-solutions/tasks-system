@@ -127,14 +127,25 @@ TasksSchema.statics.unassignTasks = async function (nodeId) {
   if(!node) {
     throw new Error('not found Node Resource');
   }
-  return TasksModel().update({
+  const tasks = await this.find({
+    node: nodeId,
+    status: 'pending',
+  });
+  const tasksId = tasks.map((v) => (v._id));
+  const result = await this.update({
     node: nodeId,
     status: 'pending',
   }, {
     $set: {
       node: undefined
     }
-  }, {new: true});
+  }, {multi: true});
+  if(result.ok === 1) {
+    return this.find({
+      _id: {$in: tasksId},
+    });
+  }
+  return Promise.resolve([]);
 }
 
 let model = null;

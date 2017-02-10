@@ -63,8 +63,8 @@ test('TasksModel cancelTask', async function (t) {
   t.equal(taskcanceled.status, 'canceled', 'status should equal canceled');
 });
 
-test('TasksModel receiveTasks', async function (t) {
-  t.plan(2);
+test('TasksModel receiveTasks and unassignTasks', async function (t) {
+  t.plan(5);
   // remove all
   await TasksModel().remove({});
   await NodesModel().remove({});
@@ -105,8 +105,14 @@ test('TasksModel receiveTasks', async function (t) {
   let list = await TasksModel().receiveTasks(toObjectId('589db5443d5dae015dc3fd7e'), 5);
   t.equal(list.length, 5);
 
+  let count = await TasksModel().count({node: toObjectId('589db5443d5dae015dc3fd7e')});
+  t.equal(count, 5);
+
   list = await TasksModel().receiveTasks(toObjectId('589db5443d5dae015dc3fd7e'), 3);
   t.equal(list.length, 3);
+
+  count = await TasksModel().count({node: toObjectId('589db5443d5dae015dc3fd7e')});
+  t.equal(count, 8);
 
   list = await TasksModel().unassignTasks(toObjectId('589db5443d5dae015dc3fd7e'));
   t.equal(list.length, 8);
