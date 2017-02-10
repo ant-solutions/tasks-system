@@ -116,6 +116,15 @@ TasksSchema.statics.cancelTask = async function (taskId) {
   }, {new: true});
 }
 
+TasksSchema.statics.highestTask = async function (nodeId) {
+  const _nodeId = isObjectId(nodeId) ? nodeId : toObjectId(nodeId);
+  const result = await this.find({node: nodeId}).sort({priority:-1}).limit(1);
+  if(result.length === 0) {
+    return null;
+  }
+  return result[0];
+}
+
 let model = null;
 export default function (mongoose) {
   if (!model) {

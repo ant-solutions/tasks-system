@@ -8,7 +8,7 @@ import {
 } from '../../utils/to-objectid';
 
 test('TasksModel test', async function (t) {
-  t.plan(23);
+  t.plan(25);
 
   // remove all
   await TasksModel().remove({});
@@ -58,10 +58,14 @@ test('TasksModel test', async function (t) {
   t.equal(bash.node.toString(), '589db5443d5dae015dc3fd7d', 'node should equal 589db5443d5dae015dc3fd7d');
   t.equal(bash.status, 'pending', 'status should equal pending');
 
+  console.log('How do i know the highest priority task of node, please see the test code');
+  const highestPriorityTask = await TasksModel().highestTask(toObjectId('589db5443d5dae015dc3fd7d'));
+  t.equal(highestPriorityTask.priority, 5, 'priority should equal 5');
+  t.equal(highestPriorityTask.node.toString(), '589db5443d5dae015dc3fd7d', 'node should equal 589db5443d5dae015dc3fd7d');
+  t.equal(highestPriorityTask.status, 'pending', 'status should equal pending');
+
   const unassignedTask = await bash.unassignTasks(toObjectId('589db5443d5dae015dc3fd7d'));
   t.equal(unassignedTask.priority, 0, 'priority should equal 5');
   t.equal(unassignedTask.node, undefined, 'node should equal undefined');
   t.equal(unassignedTask.status, 'pending', 'status should equal pending');
-
-  t.equal(1, 2);
 });
