@@ -136,8 +136,8 @@ TasksSchema.statics.unassignTasks = async function (nodeId) {
     node: nodeId,
     status: 'pending',
   }, {
-    $set: {
-      node: undefined
+    $unset: {
+      node: ""
     }
   }, {multi: true});
   if(result.ok === 1) {

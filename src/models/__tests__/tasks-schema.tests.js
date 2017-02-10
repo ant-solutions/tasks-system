@@ -64,7 +64,7 @@ test('TasksModel cancelTask', async function (t) {
 });
 
 test('TasksModel receiveTasks and unassignTasks', async function (t) {
-  t.plan(9);
+  t.plan(15);
   // remove all
   await TasksModel().remove({});
   await NodesModel().remove({});
@@ -126,8 +126,31 @@ test('TasksModel receiveTasks and unassignTasks', async function (t) {
   count = await TasksModel().count({node: toObjectId('589db5443d5dae015dc3fd7e')});
   t.equal(count, 0);
 
+  list = await TasksModel().receiveTasks(toObjectId('589db5443d5dae015dc3fd7e'), 1);
+  t.equal(list.length, 1);
+
+  list = await TasksModel().receiveTasks(toObjectId('589db5443d5dae015dc3fd7d'), 1);
+  t.equal(list.length, 1);
+
+  count = await TasksModel().count({node: toObjectId('589db5443d5dae015dc3fd7e')});
+  t.equal(count, 1);
+
+  const t1 = await TasksModel().findOne({node: toObjectId('589db5443d5dae015dc3fd7e')});
+  t.equal(moment(t1.urgency).diff(moment(), 'seconds') <= 3600, true, 'urgency should less than 1 hours');
+
+  const t2 = await TasksModel().findOne({node: toObjectId('589db5443d5dae015dc3fd7d')});
+  t.equal(moment(t2.urgency).diff(moment(), 'seconds') <= 3600, true, 'urgency should less than 1 hours');
+
   try {
     await TasksModel().receiveTasks(toObjectId('123'), 5);
+    t.equal(1, 2, 'should throw new Error');
+  }
+  catch(e){
+    t.equal(e.message, 'not found Node Resource');
+  }
+
+  try {
+    await TasksModel().unassignTasks(toObjectId('123'));
     t.equal(1, 2, 'should throw new Error');
   }
   catch(e){
