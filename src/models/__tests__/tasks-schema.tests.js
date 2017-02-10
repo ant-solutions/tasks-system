@@ -64,7 +64,7 @@ test('TasksModel cancelTask', async function (t) {
 });
 
 test('TasksModel receiveTasks and unassignTasks', async function (t) {
-  t.plan(5);
+  t.plan(9);
   // remove all
   await TasksModel().remove({});
   await NodesModel().remove({});
@@ -114,6 +114,23 @@ test('TasksModel receiveTasks and unassignTasks', async function (t) {
   count = await TasksModel().count({node: toObjectId('589db5443d5dae015dc3fd7e')});
   t.equal(count, 8);
 
+  list = await TasksModel().receiveTasks(toObjectId('589db5443d5dae015dc3fd7e'), 3);
+  t.equal(list.length, 1);
+
+  list = await TasksModel().receiveTasks(toObjectId('589db5443d5dae015dc3fd7e'), 3);
+  t.equal(list.length, 0);
+
   list = await TasksModel().unassignTasks(toObjectId('589db5443d5dae015dc3fd7e'));
-  t.equal(list.length, 8);
+  t.equal(list.length, 9);
+
+  count = await TasksModel().count({node: toObjectId('589db5443d5dae015dc3fd7e')});
+  t.equal(count, 0);
+
+  try {
+    await TasksModel().receiveTasks(toObjectId('123'), 5);
+    t.equal(1, 2, 'should throw new Error');
+  }
+  catch(e){
+    t.equal(e.message, 'not found Node Resource');
+  }
 });
