@@ -51,6 +51,5 @@ test('TasksSchedulerModel receiveTasks, unassignTasks', async function (t) {
   t.equal(list.length, 5);
 
   list = await TasksSchedulerModel().unassignTasks(toObjectId('589db5443d5dae015dc3fd7e'));
-  console.log(list);
   t.equal(list.length, 5);
 });
