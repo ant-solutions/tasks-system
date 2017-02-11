@@ -63,8 +63,93 @@ test('TasksModel cancelTask', async function (t) {
   t.equal(taskcanceled.status, 'canceled', 'status should equal canceled');
 });
 
+test('TasksModel error message', async function (t) {
+  t.plan(2);
+  try {
+    await TasksModel().receiveTasks(toObjectId('123'), 5);
+    t.equal(1, 2, 'should throw new Error');
+  }
+  catch(e){
+    t.equal(e.message, 'not found Node Resource');
+  }
+
+  try {
+    await TasksModel().unassignTasks(toObjectId('123'));
+    t.equal(1, 2, 'should throw new Error');
+  }
+  catch(e){
+    t.equal(e.message, 'not found Node Resource');
+  }
+});
+
+test('TasksModel receiveTasks with large number of bashSize', async function (t) {
+  t.plan(2);
+  // remove all
+  await TasksModel().remove({});
+  await NodesModel().remove({});
+  // Insert dummy data
+  const nodesDummyData = [{
+    _id: toObjectId('589db5443d5dae015dc3fd7d'),
+    title: 'node resources A'
+  }];
+  const nodesResources = [];
+  for (let i = nodesDummyData.length - 1; i >= 0; i--) {
+    nodesResources.push(await NodesModel().create(nodesDummyData[i]));
+  }
+  const tasksDummyData = [
+    'immediate',
+    'day',
+    'day',
+    'immediate',
+    'week',
+    'day',
+    'week',
+    'immediate',
+    'week',
+  ];
+  const tasksResources = [];
+  for (let i = tasksDummyData.length - 1; i >= 0; i--) {
+    tasksResources.push(await TasksModel().createTask(tasksDummyData[i]));
+  }
+  let list = await TasksModel().receiveTasks(toObjectId('589db5443d5dae015dc3fd7d'), 100);
+  t.equal(list.length, 9);
+  let count = await TasksModel().count({node: toObjectId('589db5443d5dae015dc3fd7d')});
+  t.equal(count, 9);
+});
+
+test('TasksModel receiveTasks should select highest priority tasks', async function (t) {
+  t.plan(3);
+  // remove all
+  await TasksModel().remove({});
+  await NodesModel().remove({});
+  // Insert dummy data
+  const nodesDummyData = [{
+    _id: toObjectId('589db5443d5dae015dc3fd7d'),
+    title: 'node resources A'
+  }];
+  const nodesResources = [];
+  for (let i = nodesDummyData.length - 1; i >= 0; i--) {
+    nodesResources.push(await NodesModel().create(nodesDummyData[i]));
+  }
+  const tasksDummyData = [
+    'immediate',
+    'day',
+    'week',
+  ];
+  const tasksResources = [];
+  for (let i = tasksDummyData.length - 1; i >= 0; i--) {
+    tasksResources.push(await TasksModel().createTask(tasksDummyData[i]));
+  }
+  let list = await TasksModel().receiveTasks(toObjectId('589db5443d5dae015dc3fd7d'), 1);
+  t.equal(list.length, 1);
+  let count = await TasksModel().count({node: toObjectId('589db5443d5dae015dc3fd7d')});
+  t.equal(count, 1);
+  const task = await TasksModel().findOne({node: toObjectId('589db5443d5dae015dc3fd7d')});
+  t.equal(moment(task.urgency).diff(moment(), 'seconds') <= 3600, true, 'urgency should less than 1 hours');
+});
+
 test('TasksModel receiveTasks and unassignTasks', async function (t) {
-  t.plan(19);
+  t.plan(17);
   // remove all
   await TasksModel().remove({});
   await NodesModel().remove({});
@@ -152,20 +237,4 @@ test('TasksModel receiveTasks and unassignTasks', async function (t) {
 
   count = await TasksModel().count({node: toObjectId('589db5443d5dae015dc3fd7e')});
   t.equal(count, 8);
-
-  try {
-    await TasksModel().receiveTasks(toObjectId('123'), 5);
-    t.equal(1, 2, 'should throw new Error');
-  }
-  catch(e){
-    t.equal(e.message, 'not found Node Resource');
-  }
-
-  try {
-    await TasksModel().unassignTasks(toObjectId('123'));
-    t.equal(1, 2, 'should throw new Error');
-  }
-  catch(e){
-    t.equal(e.message, 'not found Node Resource');
-  }
 });
