@@ -22,13 +22,24 @@ const TasksSchema = new Schema({
     enum: ['pending', 'canceled', 'completed'],
     default: 'pending',
   },
-  urgency: {
+  startTime: {
     type: Date,
   },
   node: {
     type: ObjectId,
     ref: 'Nodes',
   },
+});
+
+TasksSchema.virtual('urgency').get(function() {
+  const d = moment(this.startTime).diff(moment(), 'seconds');
+  if( d <= 3600){
+    return 'immediate';
+  }
+  if(d > 3600 && d <= 86400){
+    return 'day';
+  }
+  return 'week';
 });
 
 // indexes
@@ -61,7 +72,7 @@ TasksSchema.statics.createTask = async function (urgencyArgs) {
     time = time.add(7, 'days');
   }
   return this.create({
-    urgency: time.toDate(),
+    startTime: time.toDate(),
   });
 }
 
@@ -101,7 +112,7 @@ TasksSchema.statics.receiveTasks = async function (nodeId, batchSize) {
     status: 'pending',
     node: { $exists: false }
   }).sort({
-    urgency: 1
+    startTime: 1
   }).limit(batchSize);
   const tasksId = tasks.map((v) => (v._id));
   const result = await this.update({
